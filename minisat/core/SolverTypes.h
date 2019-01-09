@@ -23,6 +23,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Minisat_SolverTypes_h
 
 #include <assert.h>
+#include <string>
+#include <iostream>
 
 #include "minisat/mtl/IntTypes.h"
 #include "minisat/mtl/Alg.h"
@@ -65,6 +67,7 @@ inline  Lit  operator ~(Lit p)              { Lit q; q.x = p.x ^ 1; return q; }
 inline  Lit  operator ^(Lit p, bool b)      { Lit q; q.x = p.x ^ (unsigned int)b; return q; }
 inline  bool sign      (Lit p)              { return p.x & 1; }
 inline  int  var       (Lit p)              { return p.x >> 1; }
+inline	std::string printLit   (Lit p)		{ return (sign(p)?" ":"~") + std::to_string(var(p)); }
 
 // Mapping Literals to and from compact integers suitable for array indexing:
 inline  int  toInt     (Var v)              { return v; } 
@@ -217,6 +220,12 @@ public:
     Lit          subsumes    (const Clause& other) const;
     void         strengthen  (Lit p);
 };
+inline	std::string printClause   (vec<Lit>& ps) {
+	std::string s = "(";
+	for (int i = 0; i < ps.size(); i++)
+		s += " " + printLit(ps[i]);
+	s += " )";
+	return s; }
 
 
 //=================================================================================================

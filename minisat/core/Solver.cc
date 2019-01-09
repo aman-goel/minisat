@@ -229,6 +229,7 @@ bool Solver::satisfied(const Clause& c) const {
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).
 //
 void Solver::cancelUntil(int level) {
+	std::cout << "backtracking to level " << level << "\n";
     if (decisionLevel() > level){
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
@@ -239,7 +240,10 @@ void Solver::cancelUntil(int level) {
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
-    } }
+    }
+//   std::string n = "xtras/backtrack" + std::to_string(conflicts) + ".cnf";
+//	toDimacs(n.c_str());
+}
 
 
 //=================================================================================================
@@ -265,14 +269,17 @@ Lit Solver::pickBranchLit()
             next = order_heap.removeMin();
 
     // Choose polarity based on different polarity modes (global or per-variable):
+    Lit l;
     if (next == var_Undef)
-        return lit_Undef;
+    	l = lit_Undef;
     else if (user_pol[next] != l_Undef)
-        return mkLit(next, user_pol[next] == l_True);
+    	l = mkLit(next, user_pol[next] == l_True);
     else if (rnd_pol)
-        return mkLit(next, drand(random_seed) < 0.5);
+    	l = mkLit(next, drand(random_seed) < 0.5);
     else
-        return mkLit(next, polarity[next]);
+    	l = mkLit(next, polarity[next]);
+    std::cout << "picking literal " << printLit(l) << "\n";
+    return l;
 }
 
 
@@ -332,6 +339,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
 
     }while (pathC > 0);
     out_learnt[0] = ~p;
+    std::cout << "learning clause (full) " << printClause(out_learnt) << "\n";
 
     // Simplify conflict clause:
     //
@@ -381,6 +389,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
     }
 
     for (int j = 0; j < analyze_toclear.size(); j++) seen[var(analyze_toclear[j])] = 0;    // ('seen[]' is now cleared)
+    std::cout << "learning clause (sim.) " << printClause(out_learnt) << "\n";
 }
 
 
@@ -489,6 +498,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     assigns[var(p)] = lbool(!sign(p));
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
+    std::cout << "setting literal " << printLit(p) << "\n";
 }
 
 

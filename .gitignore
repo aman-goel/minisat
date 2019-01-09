@@ -1,2 +1,7 @@
 config.mk
 build
+xtras/*
+.directory
+.project
+.cproject
+.settings/*

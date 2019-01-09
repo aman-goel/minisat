@@ -343,7 +343,8 @@ inline bool     Solver::addClause       (Lit p, Lit q, Lit r, Lit s){ add_tmp.cl
 
 inline bool     Solver::isRemoved       (CRef cr)         const { return ca[cr].mark() == 1; }
 inline bool     Solver::locked          (const Clause& c) const { return value(c[0]) == l_True && reason(var(c[0])) != CRef_Undef && ca.lea(reason(var(c[0]))) == &c; }
-inline void     Solver::newDecisionLevel()                      { trail_lim.push(trail.size()); }
+inline void     Solver::newDecisionLevel()                      { trail_lim.push(trail.size());
+std::cout << "new decision @" << decisionLevel() << "\n"; }
 
 inline int      Solver::decisionLevel ()      const   { return trail_lim.size(); }
 inline uint32_t Solver::abstractLevel (Var x) const   { return 1 << (level(x) & 31); }
