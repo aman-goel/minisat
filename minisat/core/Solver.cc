@@ -241,8 +241,6 @@ void Solver::cancelUntil(int level) {
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
     }
-//   std::string n = "xtras/backtrack" + std::to_string(conflicts) + ".cnf";
-//	toDimacs(n.c_str());
 }
 
 
@@ -769,6 +767,9 @@ lbool Solver::search(int nof_conflicts)
                 // Reduce the set of learnt clauses:
                 reduceDB();
 
+          	std::string n = "xtras/decision" + std::to_string(decisions) + ".cnf";
+          	toSaucy(n.c_str());
+
             Lit next = lit_Undef;
             while (decisionLevel() < assumptions.size()){
                 // Perform user provided assumption:
@@ -932,6 +933,65 @@ static Var mapVar(Var x, vec<Var>& map, Var& max)
         map[x] = max++;
     }
     return map[x];
+}
+
+
+bool Solver::toSaucy(const char* file)
+{
+  std::cout << "writing local problem to file " << file << "\n";
+  FILE* f = fopen(file, "wr");
+  if (f == NULL)
+      fprintf(stderr, "could not open file %s\n", file), exit(1);
+
+  // Handle case when solver is in contradictory state:
+  if (!ok)
+  	return false;
+
+  vec<Var> map; Var max = 0;
+
+  // Cannot use removeClauses here because it is not safe
+  // to deallocate them at this point. Could be improved.
+  int cnt = 0;
+  for (int i = 0; i < clauses.size(); i++)
+      if (!satisfied(ca[clauses[i]]))
+          cnt++;
+
+  for (int i = 0; i < clauses.size(); i++)
+      if (!satisfied(ca[clauses[i]])){
+          Clause& c = ca[clauses[i]];
+          for (int j = 0; j < c.size(); j++)
+              if (value(c[j]) != l_False)
+                  mapVar(var(c[j]), map, max);
+      }
+
+  vec<Var> rmap;
+  rmap.growTo(max, -1);
+
+//  fprintf(f, "c var map\n");
+  for (int x = 0; x < map.size(); x++)
+    if (map[x] != -1) {
+    	assert(map[x] < rmap.size());
+    	rmap[map[x]] = x;
+//    	fprintf(f, "c %d as %d\n", x, map[x]);
+    }
+//  fprintf(f, "c \n");
+
+  fprintf(f, "c reverse var map\n");
+  for (int x = 0; x < rmap.size(); x++)
+		fprintf(f, "c %d as %d\n", x, rmap[x]);
+  fprintf(f, "c \n");
+
+  fprintf(f, "p cnf %d %d\n", max, cnt);
+
+  for (int i = 0; i < clauses.size(); i++)
+      toDimacs(f, ca[clauses[i]], map, max);
+
+  fclose(f);
+
+  std::string cmd = "/home/rock/ws/tools/saucy-3.0/saucy --cnf " + std::string(file) + " > xtras/out.saucy";
+  std::cout << "running saucy\n";
+  system(cmd.c_str());
+  exit(1);
 }
 
 
